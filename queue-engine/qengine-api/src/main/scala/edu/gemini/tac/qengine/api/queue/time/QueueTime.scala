@@ -137,6 +137,9 @@ object QueueTime {
 
   def apply(s: Site, pt: PartnerTime, bp: QueueBandPercentages, poa: Option[Percent]): QueueTime =
     new DerivedQueueTime(s, pt, bp, poa)
+
+  def explicit(categorizedTimes: Map[(Partner, QueueBand), Time], partnerOverfillAllowance: Option[Percent]): QueueTime =
+    new ExplicitQueueTime(categorizedTimes, partnerOverfillAllowance)
 }
 
 import QueueTime.Log

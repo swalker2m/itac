@@ -2,7 +2,7 @@ package edu.gemini.tac.qengine.p1
 
 import xml.Elem
 
-abstract sealed class QueueBand(val number: Int) extends Ordered[QueueBand] {
+abstract sealed class QueueBand(val number: Int) extends Ordered[QueueBand] with Product with Serializable {
   def compare(that: QueueBand): Int = number - that.number
   def categories: Set[QueueBand.Category]
   def isIn(category: QueueBand.Category): Boolean = categories.contains(category)
@@ -13,7 +13,7 @@ abstract sealed class QueueBand(val number: Int) extends Ordered[QueueBand] {
 
 object QueueBand {
 
-  abstract sealed class Category(val name: String, val order: Int) extends Ordered[Category] {
+  abstract sealed class Category(val name: String, val order: Int) extends Ordered[Category] with Product with Serializable {
     // Ordering is a bit arbitrary
     def compare(that: Category): Int = order - that.order
     override def toString: String = name

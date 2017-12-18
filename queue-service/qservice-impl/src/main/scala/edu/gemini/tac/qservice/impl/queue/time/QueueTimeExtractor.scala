@@ -7,7 +7,8 @@ import edu.gemini.tac.psconversion._
 
 import edu.gemini.tac.qengine.api.config.QueueBandPercentages
 import edu.gemini.tac.qengine.api.queue.time.{PartnerTime, PartnerTimeCalc, QueueTime}
-import edu.gemini.tac.qengine.p1.Proposal
+import edu.gemini.tac.qengine.ctx.Site
+import edu.gemini.tac.qengine.p1.{ Proposal, QueueBand }
 import edu.gemini.tac.qengine.p2.rollover.RolloverReport
 import edu.gemini.tac.qengine.util.{Time, Percent}
 
@@ -176,12 +177,60 @@ class QueueTimeExtractor(queue: PsQueue, partners: List[Partner], rop: RolloverR
    * Computes QueueTime from the definition in Queue, if possible.  Adjusts for
    * rollover time.
    */
-  def extract: PsError \/ QueueTime =
+  def extractDerived: PsError \/ QueueTime =
     for {
       ctx <- parsedCtx
       ptc <- partnerTimeCalc
       p   <- bandPercentages
       of  <- overfillFactor
     } yield QueueTime(ctx.getSite, ptc.net, p, Some(of))
+
+  def extract: PsError \/ QueueTime =
+    extractExplicit
+
+
+  // --------------------------------------------------------------------------
+  // Temporary hack, for testing ..
+  private val north: List[(String, Int)] =
+    List(
+      "US" -> 711,
+      "CA" -> 200,
+      "BR" ->  86,
+      "AR" ->  33,
+      "UH" -> 157
+    )
+
+  private val south: List[(String, Int)] =
+    List(
+      "US" -> 598,
+      "CA" -> 169,
+      "BR" ->  75,
+      "AR" ->  28,
+      "CL" -> 135
+    )
+
+  private val bands = List(QueueBand.QBand1, QueueBand.QBand2, QueueBand.QBand3)
+
+  private def extractExplicit: PsError \/ QueueTime = {
+
+    val alloc: List[(Partner, Site, Time)] = {
+      val partner: Map[String, Partner] =
+        partners.map(p => (p.id -> p)).toMap
+
+      def xform(lst: List[(String, Int)], s: Site): List[(Partner, Site, Time)] =
+        lst.map { case (id, hrs) => (partner(id), s, Time.hours(hrs)) }
+
+      xform(north, Site.north) ++ xform(south, Site.south)
+    }
+
+    for {
+      ctx <- parsedCtx
+      prc <- bandPercentages
+      off <- overfillFactor
+      cat  = alloc.collect { case (p, s, t) if s == ctx.getSite =>
+               bands.map { b => (p, b) -> t * prc(b) }
+             }.flatten.toMap
+    } yield QueueTime.explicit(cat, Some(off))
+  }
 }
 
