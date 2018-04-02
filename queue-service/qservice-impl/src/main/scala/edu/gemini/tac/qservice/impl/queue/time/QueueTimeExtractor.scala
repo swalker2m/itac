@@ -191,22 +191,24 @@ class QueueTimeExtractor(queue: PsQueue, partners: List[Partner], rop: RolloverR
 
   // --------------------------------------------------------------------------
   // Temporary hack, for testing ..
-  private val north: List[(String, Int)] =
+  private val north: List[(String, Double)] =
     List(
-      "US" -> 711,
-      "CA" -> 200,
-      "BR" ->  86,
-      "AR" ->  33,
-      "UH" -> 157
+      "US" -> 711.0,
+      "CA" -> 200.0,
+      "BR" ->  86.0,
+      "AR" ->  33.0,
+      "UH" -> 157.0,
+      "LP" -> 141.35
     )
 
-  private val south: List[(String, Int)] =
+  private val south: List[(String, Double)] =
     List(
-      "US" -> 598,
-      "CA" -> 169,
-      "BR" ->  75,
-      "AR" ->  28,
-      "CL" -> 135
+      "US" -> 598.0,
+      "CA" -> 169.0,
+      "BR" ->  75.0,
+      "AR" ->  28.0,
+      "CL" -> 135.0,
+      "LP" -> 175.67
     )
 
   private val bands = List(QueueBand.QBand1, QueueBand.QBand2, QueueBand.QBand3)
@@ -217,7 +219,7 @@ class QueueTimeExtractor(queue: PsQueue, partners: List[Partner], rop: RolloverR
       val partner: Map[String, Partner] =
         partners.map(p => (p.id -> p)).toMap
 
-      def xform(lst: List[(String, Int)], s: Site): List[(Partner, Site, Time)] =
+      def xform(lst: List[(String, Double)], s: Site): List[(Partner, Site, Time)] =
         lst.map { case (id, hrs) => (partner(id), s, Time.hours(hrs)) }
 
       xform(north, Site.north) ++ xform(south, Site.south)
